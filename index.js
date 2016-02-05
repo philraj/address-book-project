@@ -16,14 +16,14 @@ var menu = [
     }    
 ]
 
-function showMenu () {
+function mainMenu () {
     inquirer.prompt( menu, function (answers) {
         switch (answers.menuChoice) {
             case 'Create':
-                create(showMenu);
+                create(mainMenu);
                 break;
             case 'Search':
-                //search(showMenu);
+                //search(mainMenu);
                 break;
             case 'Quit':
                 console.log("Goodbye!");
@@ -34,4 +34,4 @@ function showMenu () {
 
 
 //start the program
-showMenu();
+mainMenu();
