@@ -1,6 +1,7 @@
 var async = require("async");
 var inquirer = require("inquirer");
 var Table = require("cli-table");
+var colors = require("colors");
 
 var addressBook = []
 
@@ -19,6 +20,8 @@ var mainMenu = [
     }    
 ]
 
+start();
+
 function start () {
     inquirer.prompt( mainMenu, function (answers) {
         switch (answers.menuChoice) {
@@ -35,8 +38,14 @@ function start () {
     });
 }
 
-//start the program
-start();
+var niceLabels = {
+    firstName: "First Name",
+    lastName: "Last Name",
+    birthday: "Birth date",
+    addresses: "Addresses",
+    phones: "Phone Numbers",
+    emails: "E-mail Addresses"
+}
 
 /******************************create**************************************/
 
@@ -101,8 +110,9 @@ function makeAddresses (entry, defaults, callback) {
         message: "Types of addresses...",
         type: "checkbox",
         choices: ["home", "work", "other"],
-        default: defaults.addressTypes
     }
+    
+    if (defaults) typeQuestion.default = defaults.addressTypes;
     
     //prompt the user about which types of addresses they want to add
     inquirer.prompt(typeQuestion, function (typeAnswers) {
@@ -128,8 +138,9 @@ function makePhones (entry, defaults, callback) {
         message: "Types of phone numbers...",
         type: "checkbox",
         choices: ["home", "work", "other"],
-        default: defaults.phoneTypes
     } 
+    
+    if (defaults) typeQuestion.default = defaults.phoneTypes;
     
     //prompt the user about which types of phone numbers they want to add
     inquirer.prompt(typeQuestion, function (typeAnswers) {
@@ -155,8 +166,9 @@ function makeEmails (entry, defaults, callback) {
         message: "Types of email...",
         type: "checkbox",
         choices: ["home", "work", "other"],
-        default: defaults.emailTypes
     }
+    
+    if (defaults) typeQuestion.default = defaults.emailTypes;
     
     inquirer.prompt(typeQuestion, function (typeAnswers) {
         entry.emailTypes = typeAnswers.emailTypes;
@@ -195,12 +207,20 @@ function buildInitialQuestions (defaults) {
         {
             name: "firstName",
             message: "First name...",
-            default: defaults.firstName
+            default: defaults.firstName,
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         },
         {
             name: "lastName",
             message: "Last name...",
-            default: defaults.lastName
+            default: defaults.lastName,
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         },
         {
             name: "birthday",
@@ -217,7 +237,11 @@ function buildAddressQuestions (addressTypes, defaults) {
     var genericAddressQuestions = [
         {
             name: "Line1",
-            message: "address line 1..."
+            message: "address line 1...",
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         },
         {
             name: "Line2",
@@ -225,19 +249,35 @@ function buildAddressQuestions (addressTypes, defaults) {
         },
         {
             name: "City",
-            message: "city..."
+            message: "city...",
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         },
         {
             name: "Province",
-            message: "province..."
+            message: "province...",
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         },
         {
             name: "PostalCode",
-            message: "postal code..."
+            message: "postal code...",
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         },
         {
             name: "Country",
-            message: "country..."
+            message: "country...",
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         }
     ];
     
@@ -253,6 +293,7 @@ function buildAddressQuestions (addressTypes, defaults) {
             newQuestion.name = type + genericQuestion.name;
             newQuestion.message = type + " " + genericQuestion.message;
             newQuestion.default = defaults[type + genericQuestion.name];
+            if (genericQuestion.validate) newQuestion.validate = genericQuestion.validate;
             
             addressQuestions.push(newQuestion);
         });
@@ -268,13 +309,17 @@ function buildPhoneQuestions (phoneTypes, defaults) {
     var genericPhoneQuestions = [
         {
             name: "Number",
-            message: "phone number..."
+            message: "phone number...",
+            validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
         },
         {
-            name: "PhoneType",
-            message: "phone type...",
+            name: "NumberType",
+            message: "number type...",
             type: "list",
-            choices: ["landline", "mobile", "fax"]
+            choices: ["landline", "mobile", "fax"],
         }
     ];
     
@@ -289,6 +334,7 @@ function buildPhoneQuestions (phoneTypes, defaults) {
             newQuestion.name = type + genericQuestion.name;
             newQuestion.message = type + " " + genericQuestion.message;
             newQuestion.default = defaults[type + genericQuestion.name];
+            if (genericQuestion.validate) newQuestion.validate = genericQuestion.validate;
             if (genericQuestion.type) newQuestion.type = genericQuestion.type;
             if (genericQuestion.choices) newQuestion.choices = genericQuestion.choices;
             
@@ -305,21 +351,25 @@ function buildEmailQuestions (emailTypes, defaults) {
     var genericEmailQuestions = {
         name: "Email",
         message: "email address...",
+        validate: function (input) {
+                if (input === "") return "You must enter some text.";
+                else return true;
+            }
     };
     
     var emailQuestions = [];
     
     //for each selected type of phone number (home, etc)...
     emailTypes.forEach( function (type) {
-        //go through the generic questions to build the customized versions
-            var newQuestion = {};
-            
-            newQuestion.name = type + genericQuestion.name;
-            newQuestion.message = type + " " + genericQuestion.message;
-            newQuestion.default = defaults[type + genericQuestion.name];
-            
-            emailQuestions.push(newQuestion);
-        });
+        //build the customized versions
+        var newQuestion = {};
+        
+        newQuestion.name = type + genericEmailQuestions.name;
+        newQuestion.message = type + " " + genericEmailQuestions.message;
+        newQuestion.default = defaults[type + genericEmailQuestions.name];
+        newQuestion.validate = genericEmailQuestions.validate;
+        
+        emailQuestions.push(newQuestion);
     });    
     
     return emailQuestions;
@@ -349,19 +399,60 @@ var viewMenu = [
 function view (index) {
     var table = new Table();
     
+    //using a clone for display, so that data can be manipulated without 
+    //affecting the original object
     var entry = addressBook[index];
-    var keys = Object.keys(entry);
+    var clone = {};
     
-    //DON'T FORGET FOR LATER...
-    //in the object.assign in create(), add properties like firstNameLabel
-    //with the value of "First Name" to the entry object, so that later you can
-    //quickly pull out readable english keys instead of firstName, lastName...
-    //then you would do...
-    //var propertyName = entry[key + "Label"]
-    //line[propertyName] = entry[key]
+    clone.firstName = entry.firstName;
+    clone.lastName = entry.lastName;
+    if (entry.birthday) clone.birthday = entry.birthday
+    
+    clone.addresses = "";
+    //squash similar props down to one property...
+    entry.addressTypes.forEach( function (type) {
+        clone.addresses += type.underline + "\n" +
+            entry[type + "Line1"] + "\n" +
+            entry[type + "Line2"] + "\n" +
+            entry[type + "City"] + "\n" +
+            entry[type + "Province"] + "\n" +
+            entry[type + "PostalCode"] + "\n" +
+            entry[type + "Country"] + "\n\n";
+    });
+    
+    //remove trailing newlines
+    clone.addresses = clone.addresses.slice(0, -2);
+    
+    
+    
+    clone.phones = "";
+    
+    entry.phoneTypes.forEach( function (type) {
+        clone.phones += type.underline + "\n" +
+            entry[type + "Number"] + "\n" +
+            entry[type + "NumberType"] + "\n\n";
+    });
+    
+    clone.phones = clone.phones.slice(0, -2);
+    
+    
+    
+    clone.emails = "";
+    
+    entry.emailTypes.forEach( function (type) {
+        clone.emails += type.underline + "\n" +
+            entry[type + "Email"] + "\n\n";
+    });
+    
+    clone.emails = clone.emails.slice(0, -2);
+    
+    
+    
+    var keys = Object.keys(clone);
+
     keys.forEach( function (key) {
         var line = {};
-        line[key] = entry[key];
+        line[niceLabels[key].bold] = clone[key];
         
         table.push(line);
     });
@@ -371,7 +462,7 @@ function view (index) {
     inquirer.prompt(viewMenu, function (answers) {
          switch (answers.viewChoice) {
             case "Edit":
-                create(entry);
+                create(addressBook[index]);
                 break;
             case "Delete":
                 if (answers.deleteConfirmation === true) {
@@ -425,12 +516,12 @@ function search() {
         if (matches.length > 0) {
             //push their names into the list choices, prepended with the match index
             matches.forEach( function (match, index) {
-                matchesMenu[0].choices.push(index + ". " + match.lastName + ", " + match.firstName);
+                matchesMenu.choices.push(index + ". " + match.lastName + ", " + match.firstName);
             });
         }
-        else matchesMenu[0].message = "No matches found.";
+        else matchesMenu.message = "No matches found.";
             
-        matchesMenu[0].choices.push("Search again", "Back to main menu");
+        matchesMenu.choices.push("Search again", "Back to main menu");
         
         inquirer.prompt(matchesMenu, function (answers) {
             switch (answers.matchesChoice) {
